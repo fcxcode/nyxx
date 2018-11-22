@@ -3,7 +3,7 @@ import 'package:nyxx/nyxx.dart' as nyxx;
 import 'package:nyxx/lavalink.dart' as voice;
 
 import 'dart:io';
-
+/*
 // Main function
 void main() {
   configureNyxxForVM();
@@ -49,3 +49,4 @@ void main() {
     }
   });
 }
+*/

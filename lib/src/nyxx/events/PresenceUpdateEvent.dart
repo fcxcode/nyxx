@@ -9,6 +9,7 @@ class PresenceUpdateEvent {
   Presence presence;
 
   PresenceUpdateEvent._new(Map<String, dynamic> json, Nyxx client) {
+    /*
     if (client.ready) {
       var guild = client.guilds[Snowflake(json['d']['guild_id'] as String)];
 
@@ -48,5 +49,6 @@ class PresenceUpdateEvent {
         client._events.onPresenceUpdate.add(this);
       }
     }
+    */
   }
 }

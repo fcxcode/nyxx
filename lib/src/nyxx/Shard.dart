@@ -1,5 +1,6 @@
 part of nyxx;
 
+/*
 /// Discord gateways implement a method of user-controlled guild sharding which allows for splitting events across a number of gateway connections.
 /// Guild sharding is entirely user controlled, and requires no state-sharing between separate connections to operate.
 ///
@@ -51,17 +52,12 @@ class Shard implements Disposable {
     var packet = Map<String, dynamic>();
 
     packet['status'] = status;
-
     if (afk != null) packet['afk'] = afk;
-
     if (game != null) {
       var gameMap = Map<String, dynamic>();
       gameMap['name'] = game.name;
-
       if (game.type != null) gameMap['type'] = game.type._value;
-
       if (game.url != null) gameMap['url'] = game.url;
-
       packet['game'] = gameMap;
     }
 
@@ -69,7 +65,6 @@ class Shard implements Disposable {
       packet['since'] = since.millisecondsSinceEpoch;
     else
       packet['since'] = null;
-
     this.send("STATUS_UPDATE", packet);
   }
 
@@ -407,3 +402,4 @@ class Shard implements Disposable {
     return Null;
   }
 }
+*/

@@ -30,7 +30,7 @@ class ClientUser extends User {
   /// Updates the client's presence
   ClientUser setPresence(
       {String status, bool afk = false, Presence game, DateTime since}) {
-    client.shard.setPresence(status: status, afk: afk, game: game, since: since);
+    //client.shard.setPresence(status: status, afk: afk, game: game, since: since);
     return this;
   }
 
@@ -42,7 +42,7 @@ class ClientUser extends User {
   /// });
   /// ```
   void setPresenceForShard(Function(Shard shard) func) {
-    func(client.shard);
+    //func(client.shard);
   }
 
   /// Allows to get [Member] objects for all guilds for bot user.

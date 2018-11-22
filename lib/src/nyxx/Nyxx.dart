@@ -21,7 +21,7 @@ class Nyxx implements Disposable {
   String _token;
   ClientOptions _options;
   DateTime _startTime;
-  _WS _ws;
+  _ShardManager _ws;
   _EventController _events;
   Http _http;
 
@@ -47,7 +47,7 @@ class Nyxx implements Disposable {
   /// The current version of `nyxx`
   String version = _Constants.version;
 
-  Shard shard;
+  Map<int, Shard> shards;
 
   /// Generic Stream for message like events. It includes added reactions, and message deletions.
   /// For received messages refer to [onMessageReceived]
@@ -225,7 +225,7 @@ class Nyxx implements Disposable {
     this.onDmReceived = this.onMessageReceived.where((event) =>
         event.message.channel is DMChannel ||
         event.message.channel is GroupDMChannel);
-    this._ws = _WS(this);
+    this._ws = _ShardManager(this);
   }
 
   /// The client's uptime.
@@ -328,12 +328,10 @@ class Nyxx implements Disposable {
   /// Closes websocket connections and cleans everything up.
   Future<void> close() async => await dispose();
 
-  int get shards => this._options.shardCount;
-
   @override
   Future<void> dispose() async {
-    if(shard != null)
-      await shard.dispose();
+    //if(shard != null)
+      //await shard.dispose();
     await guilds.dispose();
     await users.dispose();
     await guilds.dispose();

@@ -23,6 +23,7 @@ import 'package:w_transport/w_transport.dart' as transport;
 import 'utils.dart' as utils;
 
 import 'src/_internals.dart';
+import 'package:w_transport/vm.dart' show configureWTransportForVM;
 
 // BASE
 
@@ -33,7 +34,7 @@ part 'src/nyxx/ClientOptions.dart';
 
 part 'src/nyxx/internal/_Constants.dart';
 part 'src/nyxx/internal/_EventController.dart';
-part 'src/nyxx/internal/_WS.dart';
+part 'src/nyxx/internal/ShardManager.dart';
 part 'src/nyxx/internal/Http.dart';
 part 'src/nyxx/internal/Cache.dart';
 

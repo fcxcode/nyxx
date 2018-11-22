@@ -7,11 +7,11 @@ Logger _logger = Logger.detached("Voice Service");
 Future<void> sendFakeOp4(VoiceChannel channel,
     {bool mute = false, bool deafen = false, Guild guild}) async {
   if (guild != null) {
-    guild.client.shard.send(
-        "VOICE_STATE_UPDATE", _Opcode4(guild, channel, mute, deafen)._build());
+    //guild.client.shard.send(
+        //"VOICE_STATE_UPDATE", _Opcode4(guild, channel, mute, deafen)._build());
   } else {
-    channel.guild.client.shard.send("VOICE_STATE_UPDATE",
-        _Opcode4(channel.guild, channel, mute, deafen)._build());
+    //channel.guild.client.shard.send("VOICE_STATE_UPDATE",
+        //_Opcode4(channel.guild, channel, mute, deafen)._build());
   }
 }
 

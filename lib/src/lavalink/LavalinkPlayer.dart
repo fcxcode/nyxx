@@ -43,8 +43,8 @@ class Player {
     _onTrackError = StreamController.broadcast();
     onTrackError = _onTrackError.stream;
 
-    _guild.client.shard.send(
-        "VOICE_STATE_UPDATE", _Opcode4(_guild, channel, false, false)._build());
+    //_guild.client.shard.send(
+        //"VOICE_STATE_UPDATE", _Opcode4(_guild, channel, false, false)._build());
 
     _currentState = (await _manager.client.onVoiceStateUpdate.first).state;
     _rawEvent = (await _manager.client.onVoiceServerUpdate.first).raw;
@@ -81,8 +81,8 @@ class Player {
   Future<void> changeChannel(VoiceChannel channel,
       {bool muted = false, bool deafen = false}) {
     currentChannel = channel;
-    _guild.client.shard.send("VOICE_STATE_UPDATE",
-        _Opcode4(_guild, channel, muted, deafen)._build());
+    //_guild.client.shard.send("VOICE_STATE_UPDATE",
+        //_Opcode4(_guild, channel, muted, deafen)._build());
   }
 
   /// Resolves url to Lavalink Track
@@ -115,8 +115,8 @@ class Player {
 
   /// Disconnect from channel. Closes all unneeded connections.
   Future<void> disconnect() async {
-    _guild.client.shard.send(
-        "VOICE_STATE_UPDATE", _Opcode4(_guild, null, false, false)._build());
+    //_guild.client.shard.send(
+        //"VOICE_STATE_UPDATE", _Opcode4(_guild, null, false, false)._build());
     await stop();
     _manager._webSocket.add(jsonEncode(_SimpleOp("destroy", _guild)._build()));
     isConnected = false;
@@ -133,11 +133,11 @@ class Player {
       op = _OpPause(_guild, true).build();
 
     _manager._webSocket.add(jsonEncode(op));
-    _guild.client.shard.send(
+    /*_guild.client.shard.send(
         "VOICE_STATE_UPDATE",
         _Opcode4(_guild, currentChannel, !_currentState.selfMute,
                 _currentState.selfDeaf)
-            ._build());
+            ._build());*/
   }
 
   /// Sets equalizer for player. Map key is band and value is gain for given band.
