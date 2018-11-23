@@ -39,17 +39,17 @@ class _ShardManager {
 
 }
 
+// Decodes zlib compresses string into string json
+Map<String, dynamic> _decodeBytes(dynamic bytes) {
+  if (bytes is String) return jsonDecode(bytes) as Map<String, dynamic>;
+
+  var decoded = zlib.decoder.convert(bytes as List<int>);
+  var rawStr = utf8.decode(decoded);
+  return jsonDecode(rawStr) as Map<String, dynamic>;
+}
+
 Future shardThread(SendPort port) async {
   transport.WebSocket _websocket;
-
-  // Decodes zlib compresses string into string json
-  Map<String, dynamic> _decodeBytes(dynamic bytes) {
-    if (bytes is String) return jsonDecode(bytes) as Map<String, dynamic>;
-
-    var decoded = zlib.decoder.convert(bytes as List<int>);
-    var rawStr = utf8.decode(decoded);
-    return jsonDecode(rawStr) as Map<String, dynamic>;
-  }
 
   var recv = ReceivePort();
   port.send(recv.sendPort);
@@ -57,8 +57,6 @@ Future shardThread(SendPort port) async {
   await for(var data in recv) {
     if(data is Map<String, dynamic>) {
       _websocket.add(jsonEncode(data));
-
-      data = null;
       continue;
     }
 
@@ -69,12 +67,11 @@ Future shardThread(SendPort port) async {
             .then((ws) {
           _websocket = ws;
 
-
           print("CONNECTED");
 
           ws.listen((d) {
             port.send(_decodeBytes(d));
-            d = null;
+            //print("GOT DATA");
           });
         });
       }
@@ -105,16 +102,23 @@ class Shard {
       shardIsolate.setErrorsFatal(false);
     });
 
-    isolateReceivePort.listen((data) {
+   awaitData();
+  }
+
+  Future<void> awaitData() async {
+    await for(var data in isolateReceivePort) {
+      print(data.runtimeType);
+
       if(data is Map<String, dynamic>) {
         dispatchEvent(data, false);
+        print("DISPATCHING: ${jsonEncode(data)}");
       }
 
       if(data is SendPort) {
         isolateSendPort = data;
         isolateSendPort.send(["CONNECT", this._shardManager.gateway]);
       }
-    });
+    }
   }
 
   void send(String op, dynamic d) =>
@@ -198,8 +202,8 @@ class Shard {
             msg['d']['members'].forEach((dynamic o) {
               var mem = _StandardMember(o as Map<String, dynamic>,
                   _shardManager._client.guilds[Snowflake(msg['d']['guild_id'])], _shardManager._client);
-              _shardManager._client.users[mem.id] = mem;
-              mem.guild.members[mem.id] = mem;
+              _shardManager._client.users.add(mem);
+              mem.guild.members.add(mem);
             });
 
             //if (!_shardManager._client.ready) _shardManager.testReady();

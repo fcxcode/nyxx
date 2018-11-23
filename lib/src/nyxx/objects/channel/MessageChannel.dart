@@ -46,7 +46,7 @@ class MessageChannel extends Channel
   /// Returns message with given [id]. Allows to force fetch message from api
   /// with [force] property. By default it checks if message is in cache and fetches from api if not.
   Future<Message> getMessage(Snowflake id, {bool force = false}) async {
-    if (force || !messages.hasKey(id)) {
+    if (force || messages.findOne((m) => m.id == id) != null) {
       var r = await client._http
           .send('GET', "/channels/${this.id.toString()}/messages/$id");
       var msg = Message._new(r.body as Map<String, dynamic>, client);

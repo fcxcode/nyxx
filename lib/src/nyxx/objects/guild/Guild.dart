@@ -65,22 +65,22 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
   User owner;
 
   /// The guild's members.
-  Cache<Snowflake, Member> members;
+  Cache<Member> members;
 
   /// The guild's channels.
   ChannelCache channels;
 
   /// The guild's roles.
-  Cache<Snowflake, Role> roles;
+  Cache<Role> roles;
 
   /// Guild custom emojis
-  Cache<Snowflake, GuildEmoji> emojis;
+  Cache<GuildEmoji> emojis;
 
   /// Permission of current(bot) user in this guild
   Permissions currentUserPermissions;
 
   /// Users state cache
-  Cache<Snowflake, VoiceState> voiceStates;
+  Map<Snowflake, VoiceState> voiceStates;
 
   /// Returns url to this guild.
   String get url => "https://discordapp.com/channels/${this.id.toString()}";
@@ -92,7 +92,7 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
       [this.available = true, bool guildCreate = false])
       : super(Snowflake(raw['id'] as String)) {
     if (this.available) {
-      voiceStates = _SnowflakeCache();
+      voiceStates = Map<Snowflake, VoiceState>();
       this.name = raw['name'] as String;
       this.icon = raw['icon'] as String;
       this.region = raw['region'] as String;
@@ -109,7 +109,7 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
         this.roles = _SnowflakeCache<Role>();
         raw['roles'].forEach((o) {
           var role = Role._new(o as Map<String, dynamic>, this, client);
-          this.roles[role.id] = role;
+          this.roles.add(role);
         });
       }
 
@@ -117,7 +117,7 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
         this.emojis = _SnowflakeCache();
         raw['emojis'].forEach((dynamic o) {
           var emoji = GuildEmoji._new(o as Map<String, dynamic>, this, client);
-          this.emojis[emoji.id] = emoji;
+          this.emojis.add(emoji);
         });
       }
 
@@ -128,8 +128,8 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
         if (client._options.cacheMembers) {
           raw['members'].forEach((o) {
             final member = _StandardMember(o as Map<String, dynamic>, this, client);
-            this.members[member.id] = member;
-            client.users[member.id] = member;
+            this.members.add(member);
+            client.users.add(member);
           });
         }
 
@@ -143,8 +143,8 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
           else if (o['type'] == 4)
             channel = CategoryChannel._new(o as Map<String, dynamic>, this, client);
 
-          this.channels[channel.id] = channel;
-          client.channels[channel.id] = channel;
+          this.channels.add(channel);
+          client.channels.add(channel);
         });
 
         raw['presences'].forEach((o) {
@@ -165,8 +165,6 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
               Permissions.fromInt(raw['permissions'] as int);
 
         if (raw['voice_states'] != null) {
-          voiceStates = _SnowflakeCache();
-
           raw['voice_states'].forEach((o) {
             var state = VoiceState._new(o as Map<String, dynamic>, client, this);
 
@@ -177,7 +175,7 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
 
         if (raw['afk_channel_id'] != null) {
           var snow = Snowflake(raw['afk_channel_id'] as String);
-          if (this.channels.hasKey(snow))
+          if (channels.findOne((m) => m.id == snow) != null)
             this.afkChannel = this.channels[snow] as VoiceChannel;
         }
       }
@@ -189,7 +187,7 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
 
       if (raw['system_channel_id'] != null) {
         var snow = Snowflake(raw['system_channel_id'] as String);
-        if (this.channels.hasKey(snow))
+        if (channels.findOne((m) => m.id == snow) != null)
           this.systemChannel = this.channels[snow] as TextChannel;
       }
 
@@ -226,7 +224,7 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
   /// var emoji = await guild.getEmoji(Snowflake("461449676218957824"));
   /// ```
   Future<GuildEmoji> getEmoji(Snowflake emojiId) async {
-    if (emojis.hasKey(emojiId)) return emojis[emojiId];
+    if (emojis.findOne((m) => m.id == emojiId) != null) return emojis[emojiId];
 
     HttpResponse r = await client._http
         .send('GET', "/guilds/$id/emojis/${emojiId.toString()}");
@@ -558,7 +556,7 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
   /// var member = guild.getMember(Snowflake('302359795648954380'));
   /// ```
   Future<Member> getMemberById(Snowflake id) async {
-    if (this.members.hasKey(id)) return this.members[id];
+    if (members.findOne((m) => m.id == id) != null) return this.members[id];
 
     final r = await client._http
         .send('GET', '/guilds/${this.id}/members/${id.toString()}');
@@ -590,7 +588,7 @@ class Guild extends SnowflakeEntity implements Disposable, Nameable {
     await members.dispose();
     await roles.dispose();
     await emojis.dispose();
-    await voiceStates.dispose();
+    //await voiceStates.dispose();
     return null;
   }
 

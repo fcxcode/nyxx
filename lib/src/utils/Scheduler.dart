@@ -39,7 +39,7 @@ class Scheduler {
     client.onReady.listen((e) {
       List<MessageChannel> _targets;
       targets
-          .forEach((s) => _targets.add(client.channels[s] as MessageChannel));
+          .forEach((s) => _targets.add(client.channels.findOne((f) => f.id == s) as MessageChannel));
 
       this._t = Timer.periodic(
           runEvery, (Timer t) => _targets.forEach((chan) => action));

@@ -32,14 +32,14 @@ class Nyxx implements Disposable {
   ClientOAuth2Application app;
 
   /// All of the guilds the bot is in. Can be empty or can miss guilds on (READY_EVENT).
-  Cache<Snowflake, Guild> guilds;
+  Cache<Guild> guilds;
 
   /// All of the channels the bot can see.
   ChannelCache channels;
 
   /// All of the users the bot can see. Does not have offline users
   /// without `forceFetchUsers` enabled.
-  Cache<Snowflake, User> users;
+  Cache<User> users;
 
   /// True if client is ready.
   bool ready = false;
@@ -241,7 +241,8 @@ class Nyxx implements Disposable {
   /// var channel = await client.getChannel<TextChannel>(Snowflake('473853847115137024'));
   /// ```
   Future<T> getChannel<T>(Snowflake id, {Guild guild}) async {
-    if (this.channels.hasKey(id)) return this.channels[id] as T;
+    //TODO: REDUNDANCY
+    if (this.channels.findOne((m) => m.id == id) != null) return this.channels.findOne((d) => d.id == id) as T;
 
     var raw = (await this._http.send("GET", "/channels/${id.toString()}")).body
         as Map<String, dynamic>;
@@ -272,7 +273,8 @@ class Nyxx implements Disposable {
   /// var user = client.getClient(Snowflake("302359032612651009"));
   /// ``
   Future<User> getUser(Snowflake id) async {
-    if (this.users.hasKey(id)) return this.users[id];
+    //TODO: REDUNDANCY
+    if (this.users.findOne((m) => m.id == id) != null) return this.users.findOne((m) => m.id == id);
 
     var r = await this._http.send("GET", "/users/${id.toString()}");
     return User._new(r.body as Map<String, dynamic>, this);
@@ -283,7 +285,7 @@ class Nyxx implements Disposable {
   /// ```
   /// var guild = client.getGuild(Snowflake("302360552993456135"));
   /// ```
-  Guild getGuild(Snowflake id) => this.guilds[id];
+  Guild getGuild(Snowflake id) => this.guilds.findOne((m) => m.id == id);
 
   /// Creates new guild with provided builder.
   /// Only for bots with less than 10 guilds otherwise it will return Future with error.

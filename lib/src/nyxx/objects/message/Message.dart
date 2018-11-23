@@ -174,8 +174,8 @@ class Message extends SnowflakeEntity implements GuildEntity, Disposable {
             r['member'] = raw['member'];
             var author = _ReverseMember(r as Map<String, dynamic>,
                 client.guilds[Snowflake(raw['guild_id'] as String)], client);
-            client.users[author.id] = author;
-            guild.members[author.id] = author;
+            client.users.add(author);
+            guild.members.add(author);
             this.author = author;
           }
         }
@@ -196,7 +196,7 @@ class Message extends SnowflakeEntity implements GuildEntity, Disposable {
         r['member'] = raw['member'];
         var author = _ReverseMember(r as Map<String, dynamic>,
             client.guilds[Snowflake(raw['guild_id'] as String)], client);
-        client.users[author.id] = author;
+        client.users.add(author);
         this.author = author;
       }
     }

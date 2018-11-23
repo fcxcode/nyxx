@@ -10,12 +10,12 @@ class ChannelCreateEvent {
       if (json['d']['type'] == 1) {
         var tmp = DMChannel._new(json['d'] as Map<String, dynamic>, client);
 
-        client.channels[tmp.id] = tmp;
+        client.channels.add(tmp);
         this.channel = tmp;
       } else if (json['d']['type'] == 3) {
         var tmp = GroupDMChannel._new(json['d'] as Map<String, dynamic>, client);
 
-        client.channels[tmp.id] = tmp;
+        client.channels.add(tmp);
         this.channel = tmp;
       } else {
         final Guild guild =
@@ -30,8 +30,8 @@ class ChannelCreateEvent {
           chan = CategoryChannel._new(json['d'] as Map<String, dynamic>, guild, client);
         }
 
-        client.channels[chan.id] = chan;
-        guild.channels[chan.id] = chan;
+        client.channels.add(chan);
+        guild.channels.add(chan);
         this.channel = chan;
       }
     }
@@ -63,10 +63,10 @@ class ChannelDeleteEvent {
           this.channel =
               CategoryChannel._new(json['d'] as Map<String, dynamic>, guild, client);
         }
-        guild.channels.remove(channel.id);
+        guild.channels.remove(channel);
       }
 
-      client.channels.remove(channel.id);
+      client.channels.remove(channel);
     }
   }
 }
@@ -115,8 +115,8 @@ class ChannelUpdateEvent {
             CategoryChannel._new(json['d'] as Map<String, dynamic>, guild, client);
       }
 
-      guild.channels[oldChannel.id] = newChannel;
-      client.channels[oldChannel.id] = newChannel;
+      guild.channels.add(newChannel);
+      client.channels.add(newChannel);
     }
   }
 }

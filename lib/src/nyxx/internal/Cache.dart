@@ -2,75 +2,35 @@ part of nyxx;
 
 /// Generic interface for caching entities.
 /// Wraps [Map] interface and provides utilities for manipulating cache.
-abstract class Cache<T, S> implements Disposable {
-  Map<T, S> _cache;
+abstract class Cache<S extends SnowflakeEntity> implements Disposable {
+  List<S> _cache;
 
   /// Returns values of cache
-  Iterable<S> get values => _cache.values;
-
-  /// Returns key's values of cache
-  Iterable<T> get keys => _cache.keys;
+  Iterable<S> get values => _cache;
 
   /// Find one element in cache
-  S findOne(bool f(S item)) => values.firstWhere(f);
+  S findOne(bool f(S item)) => values.firstWhere(f, orElse: () => null);
   Iterable<S> find(bool f(S item)) => values.where(f);
 
-  /// Returns Map of keys and values where values are of type [G]
-  Map<T, G> whereType<G>() {
-    var tmp = Map<T, G>();
-    _cache.forEach((k, v) {
-      if (v is G) tmp[k] = v;
-    });
-    return tmp;
+  S add(S item) {
+    var index = _cache.indexOf(item);
+    if(index == -1) {
+      _cache.add(item);
+      return item;
+    }
+
+    _cache.removeAt(index);
+    _cache.insert(index, item);
+    return item;
   }
 
-  /// Returns element with key [key]
-  S operator [](T key) => _cache[key];
-
-  /// Sets [item] for [key]
-  void operator []=(T key, S item) => _cache[key] = item;
-
-  /// Puts [item] to collection if [key] doesn't exist in cache
-  S addIfAbsent(T key, S item) {
-    if (!_cache.containsKey(T)) return _cache[key] = item;
-    return _cache[key];
-  }
-
-  /// Returns true if cache contains [key]
-  bool hasKey(T key) => _cache.containsKey(key);
-
-  /// Returns true if cache contains [value]
-  bool hasValue(S value) => _cache.containsValue(value);
+  void remove(S item) => _cache.remove(item);
 
   /// Clear cache
   void invalidate() => _cache.clear();
 
-  /// Add to cache [value] associated with [key]
-  void add(T key, S value) => _cache[key] = value;
-
-  /// Combines [keys] with [values] - First elements with [keys] creates pair with first value from [values]
-  /// Collection have to be same length
-  void addMany(List<T> keys, List<S> values) {
-    if (keys.length != values.length)
-      throw new Exception("Cannot combine Iterables with different length!");
-
-    for (var i = 0; i < keys.length; i++) {
-      _cache[keys[i]] = values[i];
-    }
-  }
-
-  /// Add [Map] to cache.
-  void addMap(Map<T, S> mp) => _cache.addAll(mp);
-
-  /// Remove [key] with associated with it value
-  void remove(T key) => _cache.remove(key);
-
-  /// Remove everything where [predicate] is true
-  void removeWhere(bool predicate(T key, S value)) =>
-      _cache.removeWhere(predicate);
-
   /// Loop over elements from cache
-  void forEach(void f(T key, S value)) => _cache.forEach(f);
+  void forEach(void f(S value)) => _cache.forEach(f);
 
   /// Take [count] elements from cache. Returns Iterable of cache values
   Iterable<S> take(int count) => values.take(count);
@@ -80,16 +40,15 @@ abstract class Cache<T, S> implements Disposable {
       values.toList().sublist(values.length - count);
 
   /// Get first element
-  S get first => _cache.values.first;
+  S get first => _cache.first;
 
   /// Get last element
-  S get last => _cache.values.last;
+  S get last => _cache.last;
 
   /// Get number of elements from cache
   int get count => _cache.length;
 
-  /// Returns cache as Map
-  Map<T, S> get asMap => this._cache;
+  S operator [](Snowflake id) => findOne((d) => d.id == id);
 
   @override
   Future<void> dispose() => Future(() {
@@ -97,15 +56,15 @@ abstract class Cache<T, S> implements Disposable {
       });
 }
 
-class _SnowflakeCache<T> extends Cache<Snowflake, T> {
+class _SnowflakeCache<T extends SnowflakeEntity> extends Cache<T> {
   _SnowflakeCache() {
-    this._cache = Map();
+    this._cache = List<T>();
   }
 
   @override
   Future<void> dispose() => Future(() {
         if (T is Disposable) {
-          _cache.forEach((_, v) => (v as Disposable).dispose());
+          _cache.forEach((v) => (v as Disposable).dispose());
         }
 
         _cache.clear();
@@ -113,17 +72,14 @@ class _SnowflakeCache<T> extends Cache<Snowflake, T> {
 }
 
 /// Cache for Channels
-class ChannelCache extends Cache<Snowflake, Channel> {
+class ChannelCache extends Cache<Channel> {
   ChannelCache._new() {
-    this._cache = Map();
+    this._cache = List<Channel>();
   }
-
-  /// Allows to get channel and cast to [E] in one operation.
-  E get<E>(Snowflake id) => _cache[id] as E;
 
   @override
   Future<Function> dispose() => Future(() {
-        _cache.forEach((_, v) {
+        _cache.forEach((v) {
           if (v is MessageChannel) v.dispose();
         });
 
@@ -133,20 +89,20 @@ class ChannelCache extends Cache<Snowflake, Channel> {
 
 /// Cache for messages. Provides few utilities methods to facilitate interaction with messages.
 /// []= operator throws - use put() instead.
-class MessageCache extends Cache<Snowflake, Message> {
+class MessageCache extends Cache< Message> {
   ClientOptions _options;
 
   MessageCache._new(this._options) {
-    this._cache = LinkedHashMap();
+    this._cache = List<Message>();
   }
 
   /// Caches message
   Message _cacheMessage(Message message) {
     if (_options.messageCacheSize > 0) {
       if (this._cache.length >= _options.messageCacheSize) {
-        this._cache.remove(this._cache.values.last.id);
+        this._cache.removeAt(0);
       }
-      this._cache[message.id] = message;
+      this._cache.add(message);
     }
 
     return message;
@@ -175,7 +131,7 @@ class MessageCache extends Cache<Snowflake, Message> {
   Iterable<Message> get byBot => values.where((m) => m.author.bot);
 
   /// Returns messages in chronological order
-  List<Message> get inOrder => _cache.values.toList()
+  List<Message> get inOrder => _cache.toList()
     ..sort((f, s) => f.createdAt.compareTo(s.createdAt));
 
   @override
@@ -191,27 +147,9 @@ class MessageCache extends Cache<Snowflake, Message> {
 
   /// Get first element
   @override
-  Message get first => _cache.values.last;
+  Message get first => _cache.last;
 
   /// Get last element
   @override
-  Message get last => _cache.values.first;
-
-  /// Unsupported
-  @override
-  void operator []=(Snowflake key, Message item) =>
-      throw new Exception("Unsupported operation. Use put() instead");
-}
-
-/// Cache which is cleaned up.
-class VoltCache<T, S> extends Cache<T, S> {
-  VoltCache(Duration duration, bool roundup(T key, S value, Timer t)) {
-    _cache = Map();
-
-    Timer.periodic(duration, (t) {
-      _cache.forEach((k, v) {
-        if (roundup(k, v, t)) _cache.remove(k);
-      });
-    });
-  }
+  Message get last => _cache.first;
 }
