@@ -63,15 +63,14 @@ Future shardThread(SendPort port) async {
     if(data is List<String>) {
       if (data.first == "CONNECT") {
         configureWTransportForVM();
-        transport.WebSocket.connect(Uri.parse("${data[1]}?v=6&encoding=json"))
+        transport.WebSocket.connect(Uri.parse("${data[1]}?v=7&encoding=json"))
             .then((ws) {
           _websocket = ws;
 
           print("CONNECTED");
 
-          ws.listen((d) {
+          _websocket.listen((d) {
             port.send(_decodeBytes(d));
-            //print("GOT DATA");
           });
         });
       }
@@ -102,23 +101,17 @@ class Shard {
       shardIsolate.setErrorsFatal(false);
     });
 
-   awaitData();
-  }
-
-  Future<void> awaitData() async {
-    await for(var data in isolateReceivePort) {
-      print(data.runtimeType);
-
+    isolateReceivePort.listen((data) {
       if(data is Map<String, dynamic>) {
         dispatchEvent(data, false);
-        print("DISPATCHING: ${jsonEncode(data)}");
+        return;
       }
 
       if(data is SendPort) {
         isolateSendPort = data;
         isolateSendPort.send(["CONNECT", this._shardManager.gateway]);
       }
-    }
+    });
   }
 
   void send(String op, dynamic d) =>
@@ -165,7 +158,7 @@ class Shard {
         break;
 
       case _OPCodes.INVALID_SESSION:
-        exit(1);
+        exit(123);
         /*_logger.severe("Invalid session on shard [$id]. Reconnecting...");
         _heartbeatTimer.cancel();
         _shardManager._client._events.onDisconnect.add(DisconnectEvent._new(this, 9));
