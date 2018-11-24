@@ -99,18 +99,18 @@ class Shard {
     Isolate.spawn(shardThread, isolateReceivePort.sendPort).then((isolate) {
       shardIsolate = isolate;
       shardIsolate.setErrorsFatal(false);
-    });
 
-    isolateReceivePort.listen((data) {
-      if(data is Map<String, dynamic>) {
-        dispatchEvent(data, false);
-        return;
-      }
+      isolateReceivePort.listen((data) {
+        if(data is Map<String, dynamic>) {
+          dispatchEvent(data, false);
+          return;
+        }
 
-      if(data is SendPort) {
-        isolateSendPort = data;
-        isolateSendPort.send(["CONNECT", this._shardManager.gateway]);
-      }
+        if(data is SendPort) {
+          isolateSendPort = data;
+          isolateSendPort.send(["CONNECT", this._shardManager.gateway]);
+        }
+      });
     });
   }
 
