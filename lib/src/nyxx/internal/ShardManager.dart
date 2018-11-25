@@ -32,6 +32,7 @@ class _ShardManager {
 
   void connectShard(int i, int maxShard) {
     _shards[i] = Shard(this, i);
+    _shards[i]._connect();
 
     if(i + 1 < maxShard)
       Future.delayed(Duration(seconds: 6), () => connectShard(i + 1, maxShard));
@@ -54,27 +55,36 @@ Future shardThread(SendPort port) async {
   var recv = ReceivePort();
   port.send(recv.sendPort);
 
+  void connect(data) {
+    configureWTransportForVM();
+
+    transport.WebSocket.connect(Uri.parse("${data[1]}?v=6&encoding=json"))
+        .then((ws) {
+      _websocket = ws;
+
+      print("CONNECTED");
+
+      Future(() {
+        _websocket.listen((d) {
+          port.send(_decodeBytes(d));
+        });
+      });
+    });
+  }
+
   await for(var data in recv) {
     if(data is Map<String, dynamic>) {
       _websocket.add(jsonEncode(data));
       continue;
     }
 
-    if(data is List<String>) {
+    if(data is List<dynamic>) {
       if (data.first == "CONNECT") {
-        configureWTransportForVM();
-        transport.WebSocket.connect(Uri.parse("${data[1]}?v=7&encoding=json"))
-            .then((ws) {
-          _websocket = ws;
-
-          print("CONNECTED");
-
-          Future(() {
-            _websocket.listen((d) {
-              port.send(_decodeBytes(d));
-            });
-          });
-        });
+        if(data.last as bool) {
+          Future.delayed(const Duration(seconds: 4), () => connect(data));
+        } else {
+          connect(data);
+        }
       }
     }
   }
@@ -97,7 +107,9 @@ class Shard {
 
   Shard(this._shardManager, this.id) {
     isolateReceivePort = ReceivePort();
+  }
 
+  void _connect([bool resume = false]) {
     Isolate.spawn(shardThread, isolateReceivePort.sendPort).then((isolate) {
       shardIsolate = isolate;
       shardIsolate.setErrorsFatal(false);
@@ -105,12 +117,12 @@ class Shard {
 
     isolateReceivePort.listen((data) {
       if(data is Map<String, dynamic>) {
-        Future.microtask(() => dispatchEvent(data, false));
+        Future.microtask(() => dispatchEvent(data, resume));
       }
 
       if(data is SendPort) {
         isolateSendPort = data;
-        isolateSendPort.send(["CONNECT", this._shardManager.gateway]);
+        isolateSendPort.send(["CONNECT", this._shardManager.gateway, resume]);
       }
     });
   }
