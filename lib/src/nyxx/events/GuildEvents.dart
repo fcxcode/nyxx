@@ -78,7 +78,9 @@ class GuildMemberRemoveEvent {
       if (this.guild != null) {
         this.guild.memberCount--;
         this.user = User._new(json['d']['user'] as Map<String, dynamic>, client);
-        this.guild.members.remove(user as Member);
+
+        //TODO: this.guild.members.remove(user as Member);
+
         client.users.remove(user);
       }
     }
