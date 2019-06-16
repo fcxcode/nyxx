@@ -57,9 +57,11 @@ class TextChannel extends MessageChannel
     HttpResponse r = await client._http.send('GET', "/channels/$id/webhooks");
     Map<String, Webhook> map = Map();
 
-    r.body.forEach((k, o) {
-      Webhook webhook = Webhook._new(o as Map<String, dynamic>, client);
-      map[webhook.id.toString()] = webhook;
+    r.body.foreach((b) {
+      b.forEach((k, o) {
+        Webhook webhook = Webhook._new(o as Map<String, dynamic>, client);
+        map[webhook.id.toString()] = webhook;
+      });
     });
 
     return map;
