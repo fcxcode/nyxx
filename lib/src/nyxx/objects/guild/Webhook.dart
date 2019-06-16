@@ -62,8 +62,7 @@ class Webhook extends SnowflakeEntity implements ISend {
 
   /// Allows to send message via webhook
   Future<Message> send(
-      {String username,
-      Object content = "",
+      {Object content = "",
       List<AttachmentBuilder> files,
       EmbedBuilder embed,
       bool tts = false,
@@ -80,7 +79,6 @@ class Webhook extends SnowflakeEntity implements ISend {
     var newContent = _sanitizeMessage(content, disableEveryone, client);
 
     Map<String, dynamic> reqBody = {
-      "username": username,
       "content": newContent,
       "embed": embed != null ? embed._build() : ""
     };
@@ -102,4 +100,23 @@ class Webhook extends SnowflakeEntity implements ISend {
   /// Returns a string representation of this object.
   @override
   String toString() => this.name;
+
+  /// Sends a message with the webhook.
+  Future<Null> sendWH(
+      {String content,
+      List<Map<String, dynamic>> embeds,
+      String username,
+      String avatarUrl,
+      bool tts}) async {
+    Map<String, dynamic> payload = {
+      "content": content,
+      "username": username,
+      "avatar_url": avatarUrl,
+      "tts": tts,
+      "embeds": embeds
+    };
+
+    await client._http.send('POST', "/webhooks/$id/$token", body: payload);
+    return null;
+  }
 }
